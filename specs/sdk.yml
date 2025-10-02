@@ -1,0 +1,326 @@
+openapi: 3.1.0
+info:
+  title: SDK API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+    description: Dev backend
+paths:
+  /sdk/v1/features/{feature_key}/evaluate:
+    post:
+      summary: Evaluate feature for given context
+      description: |
+        Returns feature evaluation result for given project and context.
+        The project is derived from the API key.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: feature_key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateRequest'
+      responses:
+        '200':
+          description: Evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorUnauthorized'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorNotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sdk/v1/health:
+    get:
+      summary: Health check for SDK server
+      responses:
+        "200":
+          description: Health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        default:
+          description: Unexpected error
+
+  /sdk/v1/features/{feature_key}/report-error:
+    post:
+      summary: Report feature execution error (for auto-disable)
+      operationId: ReportFeatureError
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - name: feature_key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureErrorReport'
+      responses:
+        '200':
+          description: Error reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureHealth'
+        '202':
+          description: Error reported, evaluation pending
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorUnauthorized'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorNotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sdk/v1/features/{feature_key}/health:
+    get:
+      summary: Get health status of feature (including auto-disable state)
+      operationId: GetFeatureHealth
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - name: feature_key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health status of feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureHealth'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorUnauthorized'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorNotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+      required: [error]
+
+    ErrorInternalServerError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "internal"
+              message: "Internal server error"
+
+    ErrorBadRequest:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "bad_request"
+              message: "Bad request"
+
+    ErrorUnauthorized:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "unauthorized"
+              message: "Authentication required"
+
+    ErrorPermissionDenied:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "permission_denied"
+              message: "Permission denied"
+
+    ErrorTooManyRequests:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "too_many_requests"
+              message: "Too many requests"
+
+    ErrorNotFound:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          example:
+            error:
+              code: "not_found"
+              message: "Resource not found"
+
+    # ----
+
+    EvaluateRequest:
+      type: object
+      additionalProperties: true
+      example:
+        user.id: "123"
+        country: "RU"
+
+    EvaluateResponse:
+      type: object
+      properties:
+        feature_key:
+          type: string
+        enabled:
+          type: boolean
+        value:
+          type: string
+      required: [ feature_key, enabled, value ]
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ ok ]
+        server_time:
+          type: string
+          format: date-time
+      required: [ status, server_time ]
+
+    FeatureErrorReport:
+      type: object
+      properties:
+        error_type:
+          type: string
+          example: "timeout"
+        error_message:
+          type: string
+          example: "Service X did not respond in 5s"
+        context:
+          type: object
+          additionalProperties: true
+      required: [error_type, error_message]
+
+    FeatureHealth:
+      type: object
+      properties:
+        feature_key:
+          type: string
+        environment_key:
+          type: string
+        enabled:
+          type: boolean
+        auto_disabled:
+          type: boolean
+        error_rate:
+          type: number
+          format: float
+          example: 0.15
+        threshold:
+          type: number
+          format: float
+          example: 0.2
+        last_error_at:
+          type: string
+          format: date-time
+      required: [feature_key, environment_key, enabled, auto_disabled]
