@@ -67,10 +67,8 @@ async function main(): Promise<void> {
 
     for (const [errorType, message, contextData] of errorExamples) {
       try {
-        const [health, isPending] = await client.reportError(featureKey, errorType, message, contextData);
-        console.log(`Reported ${errorType} error: pending=${isPending}`);
-        console.log(`  Health: enabled=${health.enabled}, auto_disabled=${health.autoDisabled}`);
-        console.log(`  Error rate: ${health.errorRate}, threshold: ${health.threshold}`);
+        await client.reportError(featureKey, errorType, message, contextData);
+        console.log(`Reported ${errorType} error successfully - queued for processing`);
       } catch (error) {
         console.log(`Failed to report ${errorType} error: ${(error as Error).message}`);
       }

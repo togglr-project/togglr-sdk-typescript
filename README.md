@@ -170,15 +170,14 @@ The SDK supports reporting errors for features, which can trigger automatic disa
 import { ErrorType } from 'togglr-sdk-typescript';
 
 // Report an error for a feature
-const [health, isPending] = await client.reportError(
+await client.reportError(
   'feature_key',
   ErrorType.TIMEOUT,
   'Service did not respond in 5s',
   { service: 'payment-gateway', timeout_ms: 5000 }
 );
 
-console.log(`Error reported: pending=${isPending}`);
-console.log(`Feature health: enabled=${health.enabled}, auto_disabled=${health.autoDisabled}`);
+console.log('Error reported successfully - queued for processing');
 ```
 
 ### Error Types
@@ -203,7 +202,7 @@ const context = {
   region: 'us-east-1',
 };
 
-const [health, isPending] = await client.reportError(
+await client.reportError(
   'feature_key',
   ErrorType.TIMEOUT,
   'Service timeout',

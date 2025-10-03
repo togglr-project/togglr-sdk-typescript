@@ -4,9 +4,19 @@ import { TogglrClient, createRequestContext, ErrorType } from '../index';
 jest.mock('axios');
 const mockedAxios = require('axios');
 
+// Mock the generated API client
+jest.mock('../generated', () => ({
+  DefaultApi: jest.fn().mockImplementation(() => ({
+    reportFeatureError: jest.fn(),
+    getFeatureHealth: jest.fn(),
+  })),
+  Configuration: jest.fn().mockImplementation(() => ({})),
+}));
+
 describe('TogglrClient', () => {
   let client: TogglrClient;
   let mockHttpClient: any;
+  let mockApiClient: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,8 +31,18 @@ describe('TogglrClient', () => {
       },
     };
 
+    // Create mock API client
+    mockApiClient = {
+      reportFeatureError: jest.fn(),
+      getFeatureHealth: jest.fn(),
+    };
+
     // Mock axios.create to return our mock client
     mockedAxios.create.mockReturnValue(mockHttpClient);
+
+    // Mock the DefaultApi constructor
+    const { DefaultApi } = require('../generated');
+    DefaultApi.mockImplementation(() => mockApiClient);
 
     client = new TogglrClient({
       apiKey: 'test-api-key',
@@ -74,67 +94,37 @@ describe('TogglrClient', () => {
 
   describe('reportError', () => {
     it('should report error successfully', async () => {
-      mockHttpClient.post.mockResolvedValue({
-        status: 200,
-        data: {
-          feature_key: 'test-feature',
-          enabled: true,
-          auto_disabled: false,
-          error_rate: 0.1,
-          threshold: 0.5,
-        },
-      });
+      mockApiClient.reportFeatureError.mockResolvedValue({});
 
-      const [health, isPending] = await client.reportError(
+      await expect(client.reportError(
         'test-feature',
         ErrorType.TIMEOUT,
         'Test error',
         { service: 'test' }
-      );
+      )).resolves.toBeUndefined();
 
-      expect(health).toEqual({
-        featureKey: 'test-feature',
-        environmentKey: undefined,
-        enabled: true,
-        autoDisabled: false,
-        errorRate: 0.1,
-        threshold: 0.5,
-        lastErrorAt: undefined,
-      });
-      expect(isPending).toBe(false);
-    });
-
-    it('should handle 202 response with pending status', async () => {
-      mockHttpClient.post.mockResolvedValue({
-        status: 202,
-        data: {
-          feature_key: 'test-feature',
-          enabled: true,
-          auto_disabled: false,
-          error_rate: 0.1,
-          threshold: 0.5,
-        },
-      });
-
-      const [, isPending] = await client.reportError(
+      expect(mockApiClient.reportFeatureError).toHaveBeenCalledWith(
         'test-feature',
-        ErrorType.TIMEOUT,
-        'Test error'
+        {
+          error_type: ErrorType.TIMEOUT,
+          error_message: 'Test error',
+          context: { service: 'test' },
+        }
       );
-
-      expect(isPending).toBe(true);
     });
   });
 
   describe('getFeatureHealth', () => {
     it('should get feature health successfully', async () => {
-      mockHttpClient.get.mockResolvedValue({
+      mockApiClient.getFeatureHealth.mockResolvedValue({
         data: {
           feature_key: 'test-feature',
+          environment_key: 'test-env',
           enabled: true,
           auto_disabled: false,
           error_rate: 0.1,
           threshold: 0.5,
+          last_error_at: '2023-01-01T00:00:00Z',
         },
       });
 
@@ -142,20 +132,23 @@ describe('TogglrClient', () => {
 
       expect(health).toEqual({
         featureKey: 'test-feature',
-        environmentKey: undefined,
+        environmentKey: 'test-env',
         enabled: true,
         autoDisabled: false,
         errorRate: 0.1,
         threshold: 0.5,
-        lastErrorAt: undefined,
+        lastErrorAt: '2023-01-01T00:00:00Z',
       });
+
+      expect(mockApiClient.getFeatureHealth).toHaveBeenCalledWith('test-feature');
     });
   });
 
   describe('isFeatureHealthy', () => {
     it('should return true for healthy feature', async () => {
-      mockHttpClient.get.mockResolvedValue({
+      mockApiClient.getFeatureHealth.mockResolvedValue({
         data: {
+          feature_key: 'test-feature',
           enabled: true,
           auto_disabled: false,
         },
@@ -166,8 +159,9 @@ describe('TogglrClient', () => {
     });
 
     it('should return false for unhealthy feature', async () => {
-      mockHttpClient.get.mockResolvedValue({
+      mockApiClient.getFeatureHealth.mockResolvedValue({
         data: {
+          feature_key: 'test-feature',
           enabled: true,
           auto_disabled: true,
         },

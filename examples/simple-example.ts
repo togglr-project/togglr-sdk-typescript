@@ -66,14 +66,13 @@ async function main(): Promise<void> {
 
     // Report an error for a feature
     try {
-      const [health, isPending] = await client.reportError(
+      await client.reportError(
         'new_ui',
         ErrorType.TIMEOUT,
         'Service did not respond in 5s',
         { service: 'payment-gateway', timeout_ms: 5000 }
       );
-      console.log(`Error reported for new_ui: pending=${isPending}`);
-      console.log(`Feature health: enabled=${health.enabled}, auto_disabled=${health.autoDisabled}`);
+      console.log('Error reported successfully - queued for processing');
     } catch (error) {
       console.log(`Failed to report error: ${(error as Error).message}`);
     }

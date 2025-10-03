@@ -3,7 +3,6 @@ import {
   ClientConfig,
   RequestContext,
   EvaluationResult,
-  ErrorReport,
   FeatureHealth,
   TogglrException,
   UnauthorizedException,
@@ -15,12 +14,19 @@ import {
 } from './types';
 import { LRUCache, createCache } from './cache';
 import { withRetries, shouldRetry } from './retry';
+import { 
+  DefaultApi, 
+  Configuration as ApiConfiguration,
+  FeatureErrorReport,
+  FeatureHealth as ApiFeatureHealth
+} from './generated';
 
 /**
  * Togglr SDK client for feature flag evaluation.
  */
 export class TogglrClient {
   private readonly httpClient: AxiosInstance;
+  private readonly apiClient: DefaultApi;
   private readonly cache: LRUCache | null;
   private readonly logger: Logger;
 
@@ -38,6 +44,12 @@ export class TogglrClient {
       },
     });
 
+    // Create API client
+    const apiConfig = new ApiConfiguration({
+      basePath: config.baseUrl || 'http://localhost:8090',
+      apiKey: config.apiKey,
+    });
+    this.apiClient = new DefaultApi(apiConfig, undefined, this.httpClient);
 
     // Initialize cache
     this.cache = createCache(config.cache || { enabled: false, maxSize: 100, ttlSeconds: 5 });
@@ -115,21 +127,22 @@ export class TogglrClient {
     errorType: string,
     errorMessage: string,
     context: Record<string, unknown> = {}
-  ): Promise<[FeatureHealth, boolean]> {
-    const errorReport: ErrorReport = {
-      errorType,
-      errorMessage,
+  ): Promise<void> {
+    const errorReport: FeatureErrorReport = {
+      error_type: errorType,
+      error_message: errorMessage,
       context,
     };
 
-    return this.reportErrorWithRetries(featureKey, errorReport);
+    await this.reportErrorWithRetries(featureKey, errorReport);
   }
 
   /**
    * Get feature health information.
    */
   async getFeatureHealth(featureKey: string): Promise<FeatureHealth> {
-    return this.getFeatureHealthWithRetries(featureKey);
+    const apiHealth = await this.getFeatureHealthWithRetries(featureKey);
+    return this.convertFeatureHealth(apiHealth);
   }
 
   /**
@@ -196,9 +209,11 @@ export class TogglrClient {
   /**
    * Report error with retry logic.
    */
-  private async reportErrorWithRetries(featureKey: string, errorReport: ErrorReport): Promise<[FeatureHealth, boolean]> {
-    return withRetries(
-      () => this.reportErrorSingle(featureKey, errorReport),
+  private async reportErrorWithRetries(featureKey: string, errorReport: FeatureErrorReport): Promise<void> {
+    await withRetries(
+      async () => {
+        await this.reportErrorSingle(featureKey, errorReport);
+      },
       3, // Default retries
       { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
       shouldRetry
@@ -208,23 +223,10 @@ export class TogglrClient {
   /**
    * Report error single attempt.
    */
-  private async reportErrorSingle(featureKey: string, errorReport: ErrorReport): Promise<[FeatureHealth, boolean]> {
+  private async reportErrorSingle(featureKey: string, errorReport: FeatureErrorReport): Promise<void> {
     try {
-      const response = await this.httpClient.post(`/sdk/v1/features/${featureKey}/report-error`, errorReport);
-      const data = response.data;
-
-      const health: FeatureHealth = {
-        featureKey: data.feature_key,
-        environmentKey: data.environment_key,
-        enabled: data.enabled || false,
-        autoDisabled: data.auto_disabled || false,
-        errorRate: data.error_rate || 0,
-        threshold: data.threshold || 0,
-        lastErrorAt: data.last_error_at,
-      };
-
-      const isPending = response.status === 202;
-      return [health, isPending];
+      await this.apiClient.reportFeatureError(featureKey, errorReport);
+      // Success - error queued for processing
     } catch (error) {
       this.handleHttpError(error as any, featureKey);
     }
@@ -233,7 +235,7 @@ export class TogglrClient {
   /**
    * Get feature health with retry logic.
    */
-  private async getFeatureHealthWithRetries(featureKey: string): Promise<FeatureHealth> {
+  private async getFeatureHealthWithRetries(featureKey: string): Promise<ApiFeatureHealth> {
     return withRetries(
       () => this.getFeatureHealthSingle(featureKey),
       3, // Default retries
@@ -245,23 +247,33 @@ export class TogglrClient {
   /**
    * Get feature health single attempt.
    */
-  private async getFeatureHealthSingle(featureKey: string): Promise<FeatureHealth> {
+  private async getFeatureHealthSingle(featureKey: string): Promise<ApiFeatureHealth> {
     try {
-      const response = await this.httpClient.get(`/sdk/v1/features/${featureKey}/health`);
-      const data = response.data;
-
-      return {
-        featureKey: data.feature_key,
-        environmentKey: data.environment_key,
-        enabled: data.enabled || false,
-        autoDisabled: data.auto_disabled || false,
-        errorRate: data.error_rate || 0,
-        threshold: data.threshold || 0,
-        lastErrorAt: data.last_error_at,
-      };
+      const response = await this.apiClient.getFeatureHealth(featureKey);
+      return response.data;
     } catch (error) {
       this.handleHttpError(error as any, featureKey);
     }
+  }
+
+  /**
+   * Convert API FeatureHealth to SDK FeatureHealth.
+   */
+  private convertFeatureHealth(apiHealth: ApiFeatureHealth): FeatureHealth {
+    const result: FeatureHealth = {
+      featureKey: apiHealth.feature_key,
+      environmentKey: apiHealth.environment_key,
+      enabled: apiHealth.enabled || false,
+      autoDisabled: apiHealth.auto_disabled || false,
+      errorRate: apiHealth.error_rate || 0,
+      threshold: apiHealth.threshold || 0,
+    };
+    
+    if (apiHealth.last_error_at) {
+      result.lastErrorAt = apiHealth.last_error_at;
+    }
+    
+    return result;
   }
 
   /**
@@ -301,6 +313,7 @@ export class TogglrClient {
         case 404:
           throw new FeatureNotFoundException(featureKey);
         case 429:
+          // eslint-disable-next-line no-case-declarations
           const retryAfter = error.response.headers['retry-after'];
           throw new TooManyRequestsException('Too many requests', retryAfter ? parseInt(retryAfter) : undefined);
         case 500:

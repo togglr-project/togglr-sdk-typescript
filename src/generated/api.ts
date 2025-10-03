@@ -444,7 +444,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FeatureHealth>> {
+        async reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.reportFeatureError(featureKey, featureErrorReport, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
@@ -498,7 +498,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: any): AxiosPromise<FeatureHealth> {
+        reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: any): AxiosPromise<void> {
             return localVarFp.reportFeatureError(featureKey, featureErrorReport, options).then((request) => request(axios, basePath));
         },
         /**
