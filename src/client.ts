@@ -1,4 +1,3 @@
-import axios, { AxiosInstance } from 'axios';
 import {
   ClientConfig,
   RequestContext,
@@ -25,7 +24,6 @@ import {
  * Togglr SDK client for feature flag evaluation.
  */
 export class TogglrClient {
-  private readonly httpClient: AxiosInstance;
   private readonly apiClient: DefaultApi;
   private readonly cache: LRUCache | null;
   private readonly logger: Logger;
@@ -33,29 +31,15 @@ export class TogglrClient {
   constructor(config: ClientConfig) {
     this.logger = config.logger || this.createDefaultLogger();
 
-    // Create HTTP client
-    this.httpClient = axios.create({
-      baseURL: config.baseUrl || 'http://localhost:8090',
-      timeout: config.timeout || 800,
-      headers: {
-        'Authorization': config.apiKey,
-        'Content-Type': 'application/json',
-        'User-Agent': 'togglr-sdk-typescript/1.0.0',
-      },
-    });
-
     // Create API client
     const apiConfig = new ApiConfiguration({
       basePath: config.baseUrl || 'http://localhost:8090',
       apiKey: config.apiKey,
     });
-    this.apiClient = new DefaultApi(apiConfig, undefined, this.httpClient);
+    this.apiClient = new DefaultApi(apiConfig);
 
     // Initialize cache
     this.cache = createCache(config.cache || { enabled: false, maxSize: 100, ttlSeconds: 5 });
-
-    // Setup request/response interceptors
-    this.setupInterceptors();
   }
 
   /**
@@ -70,9 +54,8 @@ export class TogglrClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.httpClient.get('/sdk/v1/health');
-      const data = response.data;
-      return data?.status === 'ok';
+      const response = await this.apiClient.sdkV1HealthGet();
+      return response?.data?.status === 'ok';
     } catch (error) {
       this.logger.error('Health check failed', { error: (error as Error).message });
       return false;
@@ -193,12 +176,11 @@ export class TogglrClient {
    */
   private async evaluateSingle(featureKey: string, context: RequestContext): Promise<EvaluationResult> {
     try {
-      const response = await this.httpClient.post(`/sdk/v1/features/${featureKey}/evaluate`, context);
-      const data = response.data;
+      const response = await this.apiClient.sdkV1FeaturesFeatureKeyEvaluatePost(featureKey, context);
 
       return {
-        value: data.value || '',
-        enabled: data.enabled || false,
+        value: response.data.value || '',
+        enabled: response.data.enabled || false,
         found: true,
       };
     } catch (error) {
@@ -328,44 +310,6 @@ export class TogglrClient {
     }
   }
 
-  /**
-   * Setup request/response interceptors.
-   */
-  private setupInterceptors(): void {
-    // Request interceptor
-    this.httpClient.interceptors.request.use(
-      (config) => {
-        this.logger.debug('Making request', {
-          method: config.method?.toUpperCase(),
-          url: config.url,
-        });
-        return config;
-      },
-      (error) => {
-        this.logger.error('Request error', { error: error.message });
-        return Promise.reject(error);
-      }
-    );
-
-    // Response interceptor
-    this.httpClient.interceptors.response.use(
-      (response) => {
-        this.logger.debug('Request completed', {
-          status: response.status,
-          url: response.config.url,
-        });
-        return response;
-      },
-      (error) => {
-        this.logger.error('Response error', {
-          status: error.response?.status,
-          url: error.config?.url,
-          error: error.message,
-        });
-        return Promise.reject(error);
-      }
-    );
-  }
 
   /**
    * Create default logger.
