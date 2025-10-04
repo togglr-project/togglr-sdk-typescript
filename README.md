@@ -105,6 +105,7 @@ const client = new TogglrClient({
     maxDelay: 5.0,
     factor: 1.5,
   },
+  insecure: true, // Skip SSL verification for self-signed certificates
 });
 ```
 

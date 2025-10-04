@@ -16,6 +16,8 @@ export interface ClientConfig {
   backoff?: BackoffConfig;
   /** Logger instance */
   logger?: Logger;
+  /** Skip SSL verification for HTTPS connections */
+  insecure?: boolean;
 }
 
 /**

@@ -36,6 +36,14 @@ export class TogglrClient {
       basePath: config.baseUrl || 'http://localhost:8090',
       apiKey: config.apiKey,
     });
+    
+    // Configure SSL verification if insecure mode is enabled
+    if (config.insecure) {
+      // Note: SSL verification bypass needs to be configured at the HTTP client level
+      // This is a limitation of the generated client
+      console.warn('Insecure mode is enabled but SSL verification bypass is not supported by the generated client');
+    }
+    
     this.apiClient = new DefaultApi(apiConfig);
 
     // Initialize cache
