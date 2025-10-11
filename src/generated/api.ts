@@ -14,7 +14,7 @@
 
 
 import type { Configuration } from './configuration';
-import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // URLSearchParams not necessarily used
 // @ts-ignore
@@ -24,215 +24,50 @@ import { URL, URLSearchParams } from 'url';
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
 import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
-/**
- * 
- * @export
- * @interface ErrorBadRequest
- */
 export interface ErrorBadRequest {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorBadRequest
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface ErrorError
- */
 export interface ErrorError {
-    /**
-     * 
-     * @type {string}
-     * @memberof ErrorError
-     */
     'message'?: string;
 }
-/**
- * 
- * @export
- * @interface ErrorInternalServerError
- */
 export interface ErrorInternalServerError {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorInternalServerError
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface ErrorNotFound
- */
 export interface ErrorNotFound {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorNotFound
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface ErrorPermissionDenied
- */
 export interface ErrorPermissionDenied {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorPermissionDenied
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface ErrorTooManyRequests
- */
 export interface ErrorTooManyRequests {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorTooManyRequests
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface ErrorUnauthorized
- */
 export interface ErrorUnauthorized {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ErrorUnauthorized
-     */
     'error': ErrorError;
 }
-/**
- * 
- * @export
- * @interface EvaluateResponse
- */
 export interface EvaluateResponse {
-    /**
-     * 
-     * @type {string}
-     * @memberof EvaluateResponse
-     */
     'feature_key': string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof EvaluateResponse
-     */
     'enabled': boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof EvaluateResponse
-     */
     'value': string;
 }
-/**
- * 
- * @export
- * @interface FeatureErrorReport
- */
 export interface FeatureErrorReport {
-    /**
-     * 
-     * @type {string}
-     * @memberof FeatureErrorReport
-     */
     'error_type': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FeatureErrorReport
-     */
     'error_message': string;
-    /**
-     * 
-     * @type {{ [key: string]: any; }}
-     * @memberof FeatureErrorReport
-     */
     'context'?: { [key: string]: any; };
 }
-/**
- * 
- * @export
- * @interface FeatureHealth
- */
 export interface FeatureHealth {
-    /**
-     * 
-     * @type {string}
-     * @memberof FeatureHealth
-     */
     'feature_key': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FeatureHealth
-     */
     'environment_key': string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof FeatureHealth
-     */
     'enabled': boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof FeatureHealth
-     */
     'auto_disabled': boolean;
-    /**
-     * 
-     * @type {number}
-     * @memberof FeatureHealth
-     */
     'error_rate'?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof FeatureHealth
-     */
     'threshold'?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof FeatureHealth
-     */
     'last_error_at'?: string;
 }
-/**
- * 
- * @export
- * @interface HealthResponse
- */
 export interface HealthResponse {
-    /**
-     * 
-     * @type {string}
-     * @memberof HealthResponse
-     */
     'status': HealthResponseStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof HealthResponse
-     */
     'server_time': string;
 }
 
@@ -242,23 +77,12 @@ export const HealthResponseStatusEnum = {
 
 export type HealthResponseStatusEnum = typeof HealthResponseStatusEnum[keyof typeof HealthResponseStatusEnum];
 
-/**
- * 
- * @export
- * @interface ModelError
- */
 export interface ModelError {
-    /**
-     * 
-     * @type {ErrorError}
-     * @memberof ModelError
-     */
     'error': ErrorError;
 }
 
 /**
  * DefaultApi - axios parameter creator
- * @export
  */
 export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
@@ -269,7 +93,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFeatureHealth: async (featureKey: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getFeatureHealth: async (featureKey: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'featureKey' is not null or undefined
             assertParamExists('getFeatureHealth', 'featureKey', featureKey)
             const localVarPath = `/sdk/v1/features/{feature_key}/health`
@@ -307,7 +131,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportFeatureError: async (featureKey: string, featureErrorReport: FeatureErrorReport, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        reportFeatureError: async (featureKey: string, featureErrorReport: FeatureErrorReport, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'featureKey' is not null or undefined
             assertParamExists('reportFeatureError', 'featureKey', featureKey)
             // verify required parameter 'featureErrorReport' is not null or undefined
@@ -350,7 +174,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sdkV1FeaturesFeatureKeyEvaluatePost: async (featureKey: string, requestBody: { [key: string]: any; }, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        sdkV1FeaturesFeatureKeyEvaluatePost: async (featureKey: string, requestBody: { [key: string]: any; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'featureKey' is not null or undefined
             assertParamExists('sdkV1FeaturesFeatureKeyEvaluatePost', 'featureKey', featureKey)
             // verify required parameter 'requestBody' is not null or undefined
@@ -391,7 +215,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sdkV1HealthGet: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        sdkV1HealthGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/sdk/v1/health`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -420,7 +244,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
 /**
  * DefaultApi - functional programming interface
- * @export
  */
 export const DefaultApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
@@ -432,9 +255,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getFeatureHealth(featureKey: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FeatureHealth>> {
+        async getFeatureHealth(featureKey: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FeatureHealth>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getFeatureHealth(featureKey, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getFeatureHealth']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -444,9 +269,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.reportFeatureError(featureKey, featureErrorReport, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.reportFeatureError']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * Returns feature evaluation result for given project and context. The project is derived from the API key. 
@@ -456,9 +283,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<EvaluateResponse>> {
+        async sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<EvaluateResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.sdkV1FeaturesFeatureKeyEvaluatePost(featureKey, requestBody, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.sdkV1FeaturesFeatureKeyEvaluatePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -466,16 +295,17 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async sdkV1HealthGet(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HealthResponse>> {
+        async sdkV1HealthGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HealthResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.sdkV1HealthGet(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.sdkV1HealthGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
  * DefaultApi - factory interface
- * @export
  */
 export const DefaultApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = DefaultApiFp(configuration)
@@ -487,7 +317,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFeatureHealth(featureKey: string, options?: any): AxiosPromise<FeatureHealth> {
+        getFeatureHealth(featureKey: string, options?: RawAxiosRequestConfig): AxiosPromise<FeatureHealth> {
             return localVarFp.getFeatureHealth(featureKey, options).then((request) => request(axios, basePath));
         },
         /**
@@ -498,7 +328,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: any): AxiosPromise<void> {
+        reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.reportFeatureError(featureKey, featureErrorReport, options).then((request) => request(axios, basePath));
         },
         /**
@@ -509,7 +339,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: any): AxiosPromise<EvaluateResponse> {
+        sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): AxiosPromise<EvaluateResponse> {
             return localVarFp.sdkV1FeaturesFeatureKeyEvaluatePost(featureKey, requestBody, options).then((request) => request(axios, basePath));
         },
         /**
@@ -518,7 +348,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sdkV1HealthGet(options?: any): AxiosPromise<HealthResponse> {
+        sdkV1HealthGet(options?: RawAxiosRequestConfig): AxiosPromise<HealthResponse> {
             return localVarFp.sdkV1HealthGet(options).then((request) => request(axios, basePath));
         },
     };
@@ -526,9 +356,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
 
 /**
  * DefaultApi - object-oriented interface
- * @export
- * @class DefaultApi
- * @extends {BaseAPI}
  */
 export class DefaultApi extends BaseAPI {
     /**
@@ -537,9 +364,8 @@ export class DefaultApi extends BaseAPI {
      * @param {string} featureKey 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApi
      */
-    public getFeatureHealth(featureKey: string, options?: AxiosRequestConfig) {
+    public getFeatureHealth(featureKey: string, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getFeatureHealth(featureKey, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -550,9 +376,8 @@ export class DefaultApi extends BaseAPI {
      * @param {FeatureErrorReport} featureErrorReport 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApi
      */
-    public reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: AxiosRequestConfig) {
+    public reportFeatureError(featureKey: string, featureErrorReport: FeatureErrorReport, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).reportFeatureError(featureKey, featureErrorReport, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -563,9 +388,8 @@ export class DefaultApi extends BaseAPI {
      * @param {{ [key: string]: any; }} requestBody 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApi
      */
-    public sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: AxiosRequestConfig) {
+    public sdkV1FeaturesFeatureKeyEvaluatePost(featureKey: string, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).sdkV1FeaturesFeatureKeyEvaluatePost(featureKey, requestBody, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -574,9 +398,8 @@ export class DefaultApi extends BaseAPI {
      * @summary Health check for SDK server
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApi
      */
-    public sdkV1HealthGet(options?: AxiosRequestConfig) {
+    public sdkV1HealthGet(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).sdkV1HealthGet(options).then((request) => request(this.axios, this.basePath));
     }
 }

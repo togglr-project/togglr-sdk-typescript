@@ -10,8 +10,8 @@ async function main(): Promise<void> {
 
   // Create client with advanced configuration
   const client = new TogglrClient({
-    apiKey: 'your-api-key-here',
-    baseUrl: 'http://localhost:8090',
+    apiKey: '42b6f8f1-630c-400c-97bd-a3454a07f700',
+    baseUrl: 'https://localhost',
     timeout: 2000,
     retries: 5,
     cache: {
@@ -24,6 +24,7 @@ async function main(): Promise<void> {
       maxDelay: 5.0,
       factor: 1.5,
     },
+    insecure: true,
   });
 
   try {
@@ -41,7 +42,7 @@ async function main(): Promise<void> {
 
     console.log('Context:', JSON.stringify(context, null, 2));
 
-    const featureKey = 'advanced_analytics';
+    const featureKey = 'new_ui';
 
     // Evaluate feature
     console.log('\n=== Feature Evaluation ===');
