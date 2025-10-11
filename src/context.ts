@@ -10,7 +10,7 @@ export class RequestContextBuilder {
    * Set user ID.
    */
   withUserId(userId: string): this {
-    this.context.userId = userId;
+    this.context['user.id'] = userId;
     return this;
   }
 
@@ -18,7 +18,15 @@ export class RequestContextBuilder {
    * Set user email.
    */
   withUserEmail(userEmail: string): this {
-    this.context.userEmail = userEmail;
+    this.context['user.email'] = userEmail;
+    return this;
+  }
+
+  /**
+   * Set whether user is anonymous.
+   */
+  withAnonymous(anonymous: boolean): this {
+    this.context['user.anonymous'] = anonymous;
     return this;
   }
 
@@ -26,7 +34,23 @@ export class RequestContextBuilder {
    * Set country code.
    */
   withCountry(country: string): this {
-    this.context.country = country;
+    this.context.country_code = country;
+    return this;
+  }
+
+  /**
+   * Set region.
+   */
+  withRegion(region: string): this {
+    this.context.region = region;
+    return this;
+  }
+
+  /**
+   * Set city.
+   */
+  withCity(city: string): this {
+    this.context.city = city;
     return this;
   }
 
@@ -34,7 +58,15 @@ export class RequestContextBuilder {
    * Set device type.
    */
   withDeviceType(deviceType: string): this {
-    this.context.deviceType = deviceType;
+    this.context.device_type = deviceType;
+    return this;
+  }
+
+  /**
+   * Set device manufacturer.
+   */
+  withManufacturer(manufacturer: string): this {
+    this.context.manufacturer = manufacturer;
     return this;
   }
 
@@ -50,7 +82,7 @@ export class RequestContextBuilder {
    * Set OS version.
    */
   withOsVersion(osVersion: string): this {
-    this.context.osVersion = osVersion;
+    this.context.os_version = osVersion;
     return this;
   }
 
@@ -63,10 +95,26 @@ export class RequestContextBuilder {
   }
 
   /**
+   * Set browser version.
+   */
+  withBrowserVersion(browserVersion: string): this {
+    this.context.browser_version = browserVersion;
+    return this;
+  }
+
+  /**
    * Set language code.
    */
   withLanguage(language: string): this {
     this.context.language = language;
+    return this;
+  }
+
+  /**
+   * Set connection type.
+   */
+  withConnectionType(connectionType: string): this {
+    this.context.connection_type = connectionType;
     return this;
   }
 
@@ -83,6 +131,30 @@ export class RequestContextBuilder {
    */
   withGender(gender: string): this {
     this.context.gender = gender;
+    return this;
+  }
+
+  /**
+   * Set IP address.
+   */
+  withIp(ip: string): this {
+    this.context.ip = ip;
+    return this;
+  }
+
+  /**
+   * Set application version.
+   */
+  withAppVersion(appVersion: string): this {
+    this.context.app_version = appVersion;
+    return this;
+  }
+
+  /**
+   * Set platform.
+   */
+  withPlatform(platform: string): this {
+    this.context.platform = platform;
     return this;
   }
 

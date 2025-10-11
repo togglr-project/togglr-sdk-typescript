@@ -22,15 +22,27 @@ async function main(): Promise<void> {
   });
 
   try {
-    // Create request context
+    // Create request context with comprehensive user information
     const context = createRequestContext()
       .withUserId('user123')
+      .withUserEmail('user@example.com')
+      .withAnonymous(false)
       .withCountry('US')
+      .withRegion('us-west')
+      .withCity('San Francisco')
       .withDeviceType('mobile')
+      .withManufacturer('Apple')
       .withOs('iOS')
       .withOsVersion('15.0')
       .withBrowser('Safari')
+      .withBrowserVersion('15.0')
       .withLanguage('en-US')
+      .withConnectionType('wifi')
+      .withAge(25)
+      .withGender('female')
+      .withIp('192.168.1.1')
+      .withAppVersion('1.2.3')
+      .withPlatform('ios')
       .set('plan', 'premium')
       .build();
 

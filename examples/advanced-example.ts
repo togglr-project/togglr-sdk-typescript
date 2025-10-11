@@ -28,16 +28,29 @@ async function main(): Promise<void> {
   });
 
   try {
-    // Create request context
+    // Create request context with comprehensive user information
     const context = createRequestContext()
       .withUserId('user456')
-      .withCountry('CA')
       .withUserEmail('user@example.ca')
+      .withAnonymous(false)
+      .withCountry('CA')
+      .withRegion('north')
+      .withCity('Toronto')
       .withDeviceType('desktop')
+      .withManufacturer('Apple')
       .withOs('macOS')
       .withOsVersion('12.0')
+      .withBrowser('Chrome')
+      .withBrowserVersion('91.0')
+      .withLanguage('en-CA')
+      .withConnectionType('ethernet')
+      .withAge(32)
+      .withGender('male')
+      .withIp('192.168.1.50')
+      .withAppVersion('2.0.1')
+      .withPlatform('macos')
       .set('subscription', 'premium')
-      .set('region', 'north')
+      .set('user.role', 'admin')
       .build();
 
     console.log('Context:', JSON.stringify(context, null, 2));

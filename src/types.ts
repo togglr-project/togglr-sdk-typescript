@@ -49,25 +49,43 @@ export interface BackoffConfig {
  */
 export interface RequestContext {
   /** User ID */
-  userId?: string;
+  'user.id'?: string;
   /** User email */
-  userEmail?: string;
+  'user.email'?: string;
+  /** Whether user is anonymous */
+  'user.anonymous'?: boolean;
   /** Country code */
-  country?: string;
+  country_code?: string;
+  /** Region */
+  region?: string;
+  /** City */
+  city?: string;
   /** Device type */
-  deviceType?: string;
+  device_type?: string;
+  /** Device manufacturer */
+  manufacturer?: string;
   /** Operating system */
   os?: string;
   /** OS version */
-  osVersion?: string;
+  os_version?: string;
   /** Browser */
   browser?: string;
+  /** Browser version */
+  browser_version?: string;
   /** Language code */
   language?: string;
+  /** Connection type */
+  connection_type?: string;
   /** User age */
   age?: number;
   /** User gender */
   gender?: string;
+  /** IP address */
+  ip?: string;
+  /** Application version */
+  app_version?: string;
+  /** Platform */
+  platform?: string;
   /** Custom attributes */
   [key: string]: unknown;
 }

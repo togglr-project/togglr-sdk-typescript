@@ -127,20 +127,44 @@ interface ClientConfig {
 
 ### Creating request context
 
+The SDK provides many convenient `with_*` methods for common attributes:
+
 ```typescript
 import { createRequestContext } from 'togglr-sdk-typescript';
 
+// Basic user information
 const context = createRequestContext()
-  .withUserId('user123')
-  .withUserEmail('user@example.com')
-  .withCountry('US')
-  .withDeviceType('mobile')
-  .withOs('iOS')
-  .withOsVersion('15.0')
-  .withBrowser('Safari')
-  .withLanguage('en-US')
-  .withAge(25)
-  .withGender('female')
+  .withUserId('user123')                    // Sets 'user.id'
+  .withUserEmail('user@example.com')        // Sets 'user.email'
+  .withAnonymous(false)                     // Sets 'user.anonymous'
+
+// Location information
+  .withCountry('US')                        // Sets 'country_code'
+  .withRegion('us-west')                    // Sets 'region'
+  .withCity('San Francisco')                // Sets 'city'
+
+// Device information
+  .withDeviceType('mobile')                 // Sets 'device_type'
+  .withManufacturer('Apple')                // Sets 'manufacturer'
+  .withOs('iOS')                            // Sets 'os'
+  .withOsVersion('15.0')                    // Sets 'os_version'
+
+// Browser information
+  .withBrowser('Safari')                    // Sets 'browser'
+  .withBrowserVersion('15.0')               // Sets 'browser_version'
+
+// User demographics
+  .withAge(25)                              // Sets 'age'
+  .withGender('female')                     // Sets 'gender'
+
+// Technical details
+  .withLanguage('en-US')                    // Sets 'language'
+  .withConnectionType('wifi')               // Sets 'connection_type'
+  .withIp('192.168.1.1')                   // Sets 'ip'
+  .withAppVersion('1.2.3')                 // Sets 'app_version'
+  .withPlatform('ios')                     // Sets 'platform'
+
+// Custom attributes
   .set('custom_attribute', 'custom_value')
   .setMany({
     'user.role': 'admin',
@@ -148,6 +172,41 @@ const context = createRequestContext()
   })
   .build();
 ```
+
+#### Available Context Methods
+
+**User Information:**
+- `withUserId(userId: string)` - Set `user.id`
+- `withUserEmail(userEmail: string)` - Set `user.email`
+- `withAnonymous(anonymous: boolean)` - Set `user.anonymous`
+- `withAge(age: number)` - Set `age`
+- `withGender(gender: string)` - Set `gender`
+
+**Location Information:**
+- `withCountry(country: string)` - Set `country_code`
+- `withRegion(region: string)` - Set `region`
+- `withCity(city: string)` - Set `city`
+- `withIp(ip: string)` - Set `ip`
+
+**Device Information:**
+- `withDeviceType(deviceType: string)` - Set `device_type`
+- `withManufacturer(manufacturer: string)` - Set `manufacturer`
+- `withOs(os: string)` - Set `os`
+- `withOsVersion(osVersion: string)` - Set `os_version`
+- `withPlatform(platform: string)` - Set `platform`
+
+**Browser Information:**
+- `withBrowser(browser: string)` - Set `browser`
+- `withBrowserVersion(browserVersion: string)` - Set `browser_version`
+
+**Technical Details:**
+- `withLanguage(language: string)` - Set `language`
+- `withConnectionType(connectionType: string)` - Set `connection_type`
+- `withAppVersion(appVersion: string)` - Set `app_version`
+
+**Custom Attributes:**
+- `set(key: string, value: unknown)` - Set custom key-value pair
+- `setMany(attributes: Record<string, unknown>)` - Set multiple custom attributes
 
 ### Evaluating feature flags
 
