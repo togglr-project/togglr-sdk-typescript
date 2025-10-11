@@ -22,7 +22,8 @@
     "typescript",
     "sdk"
   ],
-  "author": "Togglr Team",
+  "declaration": true,
+  "author": "Roman Chudov",
   "license": "MIT",
   "files": [
     "dist/**/*",
