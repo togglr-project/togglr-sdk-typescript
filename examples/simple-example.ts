@@ -10,7 +10,7 @@ async function main(): Promise<void> {
 
   // Create client with default configuration
   const client = new TogglrClient({
-    apiKey: 'your-api-key-here',
+    apiKey: '42b6f8f1-630c-400c-97bd-a3454a07f700',
     baseUrl: 'http://localhost:8090',
     timeout: 1000,
     cache: {
