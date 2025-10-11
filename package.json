@@ -11,7 +11,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "generate-client": "openapi-generator-cli generate -i specs/sdk.yml -g typescript-axios -o src/generated --additional-properties=supportsES6=true,withNodeImports=true,typescriptThreePlus=true",
+    "generate-client": "openapi-generator-cli generate -i specs/sdk.yml -g typescript-axios -o src/generated --additional-properties=supportsES6=true,withNodeImports=true,typescriptThreePlus=true && node scripts/fix-exact-optional-properties.js",
     "clean": "rm -rf dist src/generated",
     "prepublishOnly": "npm run clean && npm run generate-client && npm run build"
   },
