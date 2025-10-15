@@ -4,6 +4,7 @@ import {
   EvaluationResult,
   FeatureHealth,
   TrackEvent,
+  BackoffConfig,
   TogglrException,
   UnauthorizedException,
   BadRequestException,
@@ -29,9 +30,13 @@ export class TogglrClient {
   private readonly apiClient: DefaultApi;
   private readonly cache: LRUCache | null;
   private readonly logger: Logger;
+  private readonly retries: number;
+  private readonly backoff: BackoffConfig;
 
   constructor(config: ClientConfig) {
     this.logger = config.logger || this.createDefaultLogger();
+    this.retries = config.retries || 3;
+    this.backoff = config.backoff || { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 };
 
     // Create API client
     const apiConfig = new ApiConfiguration({
@@ -174,8 +179,8 @@ export class TogglrClient {
     // Make API call with retries
     const result = await withRetries(
       () => this.evaluateSingle(featureKey, context),
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
 
@@ -213,8 +218,8 @@ export class TogglrClient {
       async () => {
         await this.reportErrorSingle(featureKey, errorReport);
       },
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
   }
@@ -237,8 +242,8 @@ export class TogglrClient {
   private async getFeatureHealthWithRetries(featureKey: string): Promise<ApiFeatureHealth> {
     return withRetries(
       () => this.getFeatureHealthSingle(featureKey),
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
   }
@@ -263,8 +268,8 @@ export class TogglrClient {
       async () => {
         await this.trackEventSingle(featureKey, event);
       },
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
   }
