@@ -3,6 +3,7 @@ export { TogglrClient } from './client';
 export { RequestContextBuilder, createRequestContext, fromObject } from './context';
 export { LRUCache, createCache } from './cache';
 export { withRetries, calculateBackoffDelay, sleep, shouldRetry } from './retry';
+export { TrackEventBuilder, createTrackEvent } from './track-event';
 
 // Type exports
 export type {
@@ -13,6 +14,7 @@ export type {
   EvaluationResult,
   ErrorReport,
   FeatureHealth,
+  TrackEvent,
   Logger,
   CacheEntry,
 } from './types';
@@ -26,6 +28,7 @@ export {
   InternalServerException,
   TooManyRequestsException,
   ErrorType,
+  EventType,
 } from './types';
 
 // Generated API exports

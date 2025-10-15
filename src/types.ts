@@ -159,6 +159,33 @@ export interface CacheEntry {
 }
 
 /**
+ * Event types for tracking.
+ */
+export enum EventType {
+  SUCCESS = 'success',
+  FAILURE = 'failure',
+  ERROR = 'error',
+}
+
+/**
+ * Track event for analytics.
+ */
+export interface TrackEvent {
+  /** Variant key that was evaluated */
+  variantKey: string;
+  /** Type of event being tracked */
+  eventType: EventType;
+  /** Optional reward value */
+  reward?: number;
+  /** Additional context data */
+  context: Record<string, unknown>;
+  /** When the event occurred */
+  createdAt?: Date;
+  /** Deduplication key to prevent duplicate events */
+  dedupKey?: string;
+}
+
+/**
  * Error types for reporting.
  */
 export enum ErrorType {
