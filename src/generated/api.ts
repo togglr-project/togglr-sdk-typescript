@@ -80,6 +80,44 @@ export type HealthResponseStatusEnum = typeof HealthResponseStatusEnum[keyof typ
 export interface ModelError {
     'error': ErrorError;
 }
+/**
+ * Event sent from SDK. SDK SHOULD send an impression event for each evaluation (recommended). Conversions / errors / custom events are used to update algorithm statistics. 
+ */
+export interface TrackRequest {
+    /**
+     * Variant key returned by evaluate (e.g. \"A\", \"v2\").
+     */
+    'variant_key': string;
+    /**
+     * Type of event (e.g. \"success\", \"failure\", \"error\").
+     */
+    'event_type': TrackRequestEventTypeEnum;
+    /**
+     * Numeric reward associated with event (e.g. 1.0 for conversion). Default 0.
+     */
+    'reward'?: number;
+    /**
+     * Arbitrary context passed by SDK (user id, session, metadata).
+     */
+    'context'?: { [key: string]: any; };
+    /**
+     * Event timestamp. If omitted, server time will be used.
+     */
+    'created_at'?: string;
+    /**
+     * Optional idempotency key to deduplicate duplicate events from SDK retries.
+     */
+    'dedup_key'?: string;
+}
+
+export const TrackRequestEventTypeEnum = {
+    Success: 'success',
+    Failure: 'failure',
+    Error: 'error'
+} as const;
+
+export type TrackRequestEventTypeEnum = typeof TrackRequestEventTypeEnum[keyof typeof TrackRequestEventTypeEnum];
+
 
 /**
  * DefaultApi - axios parameter creator
@@ -239,6 +277,49 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Send a feedback event related to a feature evaluation. Events are written to TimescaleDB (hypertable) and used for analytics, auto-disable and training MAB algorithms. The project is derived from the API key. 
+         * @summary Track event for a feature (impression / conversion / error / custom)
+         * @param {string} featureKey 
+         * @param {TrackRequest} trackRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trackFeatureEvent: async (featureKey: string, trackRequest: TrackRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'featureKey' is not null or undefined
+            assertParamExists('trackFeatureEvent', 'featureKey', featureKey)
+            // verify required parameter 'trackRequest' is not null or undefined
+            assertParamExists('trackFeatureEvent', 'trackRequest', trackRequest)
+            const localVarPath = `/sdk/v1/features/{feature_key}/track`
+                .replace(`{${"feature_key"}}`, encodeURIComponent(String(featureKey)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(trackRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -301,6 +382,20 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.sdkV1HealthGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Send a feedback event related to a feature evaluation. Events are written to TimescaleDB (hypertable) and used for analytics, auto-disable and training MAB algorithms. The project is derived from the API key. 
+         * @summary Track event for a feature (impression / conversion / error / custom)
+         * @param {string} featureKey 
+         * @param {TrackRequest} trackRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async trackFeatureEvent(featureKey: string, trackRequest: TrackRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.trackFeatureEvent(featureKey, trackRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.trackFeatureEvent']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -350,6 +445,17 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         sdkV1HealthGet(options?: RawAxiosRequestConfig): AxiosPromise<HealthResponse> {
             return localVarFp.sdkV1HealthGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Send a feedback event related to a feature evaluation. Events are written to TimescaleDB (hypertable) and used for analytics, auto-disable and training MAB algorithms. The project is derived from the API key. 
+         * @summary Track event for a feature (impression / conversion / error / custom)
+         * @param {string} featureKey 
+         * @param {TrackRequest} trackRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trackFeatureEvent(featureKey: string, trackRequest: TrackRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.trackFeatureEvent(featureKey, trackRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -401,6 +507,18 @@ export class DefaultApi extends BaseAPI {
      */
     public sdkV1HealthGet(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).sdkV1HealthGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Send a feedback event related to a feature evaluation. Events are written to TimescaleDB (hypertable) and used for analytics, auto-disable and training MAB algorithms. The project is derived from the API key. 
+     * @summary Track event for a feature (impression / conversion / error / custom)
+     * @param {string} featureKey 
+     * @param {TrackRequest} trackRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public trackFeatureEvent(featureKey: string, trackRequest: TrackRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).trackFeatureEvent(featureKey, trackRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

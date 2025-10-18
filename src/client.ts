@@ -3,6 +3,8 @@ import {
   RequestContext,
   EvaluationResult,
   FeatureHealth,
+  TrackEvent,
+  BackoffConfig,
   TogglrException,
   UnauthorizedException,
   BadRequestException,
@@ -17,7 +19,8 @@ import {
   DefaultApi, 
   Configuration as ApiConfiguration,
   FeatureErrorReport,
-  FeatureHealth as ApiFeatureHealth
+  FeatureHealth as ApiFeatureHealth,
+  TrackRequest
 } from './generated';
 
 /**
@@ -27,9 +30,13 @@ export class TogglrClient {
   private readonly apiClient: DefaultApi;
   private readonly cache: LRUCache | null;
   private readonly logger: Logger;
+  private readonly retries: number;
+  private readonly backoff: BackoffConfig;
 
   constructor(config: ClientConfig) {
     this.logger = config.logger || this.createDefaultLogger();
+    this.retries = config.retries || 3;
+    this.backoff = config.backoff || { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 };
 
     // Create API client
     const apiConfig = new ApiConfiguration({
@@ -145,6 +152,13 @@ export class TogglrClient {
   }
 
   /**
+   * Track an event for analytics.
+   */
+  async trackEvent(featureKey: string, event: TrackEvent): Promise<void> {
+    await this.trackEventWithRetries(featureKey, event);
+  }
+
+  /**
    * Evaluate feature with retry logic.
    */
   private async evaluateWithRetries(featureKey: string, context: RequestContext): Promise<EvaluationResult> {
@@ -165,8 +179,8 @@ export class TogglrClient {
     // Make API call with retries
     const result = await withRetries(
       () => this.evaluateSingle(featureKey, context),
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
 
@@ -204,8 +218,8 @@ export class TogglrClient {
       async () => {
         await this.reportErrorSingle(featureKey, errorReport);
       },
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
   }
@@ -228,8 +242,8 @@ export class TogglrClient {
   private async getFeatureHealthWithRetries(featureKey: string): Promise<ApiFeatureHealth> {
     return withRetries(
       () => this.getFeatureHealthSingle(featureKey),
-      3, // Default retries
-      { baseDelay: 0.1, maxDelay: 2.0, factor: 2.0 }, // Default backoff
+      this.retries,
+      this.backoff,
       shouldRetry
     );
   }
@@ -241,6 +255,49 @@ export class TogglrClient {
     try {
       const response = await this.apiClient.getFeatureHealth(featureKey);
       return response.data;
+    } catch (error) {
+      this.handleHttpError(error as any, featureKey);
+    }
+  }
+
+  /**
+   * Track event with retry logic.
+   */
+  private async trackEventWithRetries(featureKey: string, event: TrackEvent): Promise<void> {
+    await withRetries(
+      async () => {
+        await this.trackEventSingle(featureKey, event);
+      },
+      this.retries,
+      this.backoff,
+      shouldRetry
+    );
+  }
+
+  /**
+   * Track event single attempt.
+   */
+  private async trackEventSingle(featureKey: string, event: TrackEvent): Promise<void> {
+    try {
+      const trackRequest: TrackRequest = {
+        variant_key: event.variantKey,
+        event_type: event.eventType as any,
+        context: event.context,
+      };
+
+      if (event.reward !== undefined) {
+        trackRequest.reward = event.reward;
+      }
+
+      if (event.createdAt !== undefined) {
+        trackRequest.created_at = event.createdAt.toISOString();
+      }
+
+      if (event.dedupKey !== undefined) {
+        trackRequest.dedup_key = event.dedupKey;
+      }
+
+      await this.apiClient.trackFeatureEvent(featureKey, trackRequest);
     } catch (error) {
       this.handleHttpError(error as any, featureKey);
     }

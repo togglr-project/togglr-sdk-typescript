@@ -1,6 +1,5 @@
 .gitignore
 .npmignore
-.openapi-generator-ignore
 api.ts
 base.ts
 common.ts
@@ -18,5 +17,6 @@ docs/EvaluateResponse.md
 docs/FeatureErrorReport.md
 docs/FeatureHealth.md
 docs/HealthResponse.md
+docs/TrackRequest.md
 git_push.sh
 index.ts

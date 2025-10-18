@@ -8,6 +8,7 @@ All URIs are relative to *http://localhost:8090*
 |[**reportFeatureError**](#reportfeatureerror) | **POST** /sdk/v1/features/{feature_key}/report-error | Report feature execution error (for auto-disable)|
 |[**sdkV1FeaturesFeatureKeyEvaluatePost**](#sdkv1featuresfeaturekeyevaluatepost) | **POST** /sdk/v1/features/{feature_key}/evaluate | Evaluate feature for given context|
 |[**sdkV1HealthGet**](#sdkv1healthget) | **GET** /sdk/v1/health | Health check for SDK server|
+|[**trackFeatureEvent**](#trackfeatureevent) | **POST** /sdk/v1/features/{feature_key}/track | Track event for a feature (impression / conversion / error / custom)|
 
 # **getFeatureHealth**
 > FeatureHealth getFeatureHealth()
@@ -222,6 +223,67 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Health information |  -  |
+|**0** | Unexpected error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **trackFeatureEvent**
+> trackFeatureEvent(trackRequest)
+
+Send a feedback event related to a feature evaluation. Events are written to TimescaleDB (hypertable) and used for analytics, auto-disable and training MAB algorithms. The project is derived from the API key. 
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration,
+    TrackRequest
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let featureKey: string; // (default to undefined)
+let trackRequest: TrackRequest; //
+
+const { status, data } = await apiInstance.trackFeatureEvent(
+    featureKey,
+    trackRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **trackRequest** | **TrackRequest**|  | |
+| **featureKey** | [**string**] |  | defaults to undefined|
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**202** | Event accepted for processing |  -  |
+|**400** | Bad request |  -  |
+|**401** | Unauthorized |  -  |
+|**404** | Feature not found |  -  |
+|**429** | Too many requests |  -  |
+|**500** | Internal server error |  -  |
 |**0** | Unexpected error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

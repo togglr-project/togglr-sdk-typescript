@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { TogglrClient, createRequestContext, ErrorType } from '../src';
+import { TogglrClient, createRequestContext, ErrorType, createTrackEvent, EventType } from '../src';
 
 /**
  * Simple example of using Togglr TypeScript SDK.
@@ -105,6 +105,53 @@ async function main(): Promise<void> {
     } catch (error) {
       console.log(`Failed to check feature health: ${(error as Error).message}`);
     }
+
+    // Example: Track events for analytics
+    // Track impression event (recommended for each evaluation)
+    try {
+      const impressionEvent = createTrackEvent('A', EventType.SUCCESS)
+        .withContext('user.id', 'user123')
+        .withContext('country', 'US')
+        .withContext('device_type', 'mobile')
+        .withDedupKey('impression-user123-new_ui')
+        .build();
+
+      await client.trackEvent('new_ui', impressionEvent);
+      console.log('Impression event tracked successfully');
+    } catch (error) {
+      console.log(`Error tracking impression event: ${(error as Error).message}`);
+    }
+
+    // Track conversion event with reward
+    try {
+      const conversionEvent = createTrackEvent('A', EventType.SUCCESS)
+        .withReward(1.0)
+        .withContext('user.id', 'user123')
+        .withContext('conversion_type', 'purchase')
+        .withContext('order_value', 99.99)
+        .withDedupKey('conversion-user123-new_ui')
+        .build();
+
+      await client.trackEvent('new_ui', conversionEvent);
+      console.log('Conversion event tracked successfully');
+    } catch (error) {
+      console.log(`Error tracking conversion event: ${(error as Error).message}`);
+    }
+
+    // Track error event
+    try {
+      const errorEvent = createTrackEvent('B', EventType.ERROR)
+        .withContext('user.id', 'user123')
+        .withContext('error_type', 'timeout')
+        .withContext('error_message', 'Service did not respond in 5s')
+        .withDedupKey('error-user123-new_ui')
+        .build();
+
+      await client.trackEvent('new_ui', errorEvent);
+      console.log('Error event tracked successfully');
+    } catch (error) {
+      console.log(`Error tracking error event: ${(error as Error).message}`);
+    }
   } finally {
     client.close();
     console.log('Client closed');
@@ -112,6 +159,4 @@ async function main(): Promise<void> {
 }
 
 // Run the example
-if (require.main === module) {
-  main().catch(console.error);
-}
+main().catch(console.error);
