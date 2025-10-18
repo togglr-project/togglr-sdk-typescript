@@ -1,6 +1,6 @@
 {
   "name": "togglr-sdk-typescript",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "TypeScript SDK for Togglr feature flag management system",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
